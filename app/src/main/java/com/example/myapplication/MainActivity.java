@@ -21,7 +21,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_container), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
@@ -31,11 +32,15 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                if (item.getItemId() == R.id.navigation_scan) {
+                int itemId = item.getItemId();
+                if (itemId == R.id.navigation_scan) {
                     startActivity(new Intent(MainActivity.this, ScanBarcodeActivity.class));
                     return true;
-                } else if (item.getItemId() == R.id.navigation_pantry) {
+                } else if (itemId == R.id.navigation_pantry) {
                     startActivity(new Intent(MainActivity.this, PantryActivity.class));
+                    return true;
+                } else if (itemId == R.id.navigation_profile) {
+                    startActivity(new Intent(MainActivity.this, ProfileActivity.class));
                     return true;
                 }
                 return false;

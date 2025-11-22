@@ -1,7 +1,5 @@
 package com.example.myapplication.analysis;
 
-import com.example.myapplication.analysis.rules.AnalysisResult;
-
 import java.util.List;
 
 public class ProductAnalysisReport {

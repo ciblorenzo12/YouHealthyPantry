@@ -1,15 +1,16 @@
 package com.example.myapplication;
 
 import android.app.Dialog;
-import android.graphics.Color;
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
-import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,19 +25,19 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.myapplication.analysis.ProductAnalysisReport;
-import com.example.myapplication.analysis.rules.AnalysisResult;
+import com.example.myapplication.analysis.AnalysisResult;
 import com.example.myapplication.analysis.AnalysisResultAdapter;
+import com.example.myapplication.analysis.ProductAnalysisReport;
 import com.example.myapplication.analysis.rules.RuleEngine;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -52,13 +53,13 @@ public class ProductDetailsFragment extends BottomSheetDialogFragment {
     private ExecutorService executorService;
     private AppDatabase db;
     private RuleEngine ruleEngine;
+    private FirebaseUser currentUser;
 
     private ImageView productImageView;
     private TextView productNameTextView, productBrandTextView, packagingTextView, labelsTextView, ingredientsTextView;
     private TextView nutriscoreTextView, novaTextView, ecoscoreTextView, categoriesTextView, servingSizeTextView, healthScoreTextView;
     private Button removeFromPantryButton;
     private TableLayout nutritionFactsTable;
-    private ConstraintLayout scoresLayout;
     private RecyclerView analysisRecyclerView;
 
     public static ProductDetailsFragment newInstance(String barcode) {
@@ -76,6 +77,7 @@ public class ProductDetailsFragment extends BottomSheetDialogFragment {
         executorService = Executors.newSingleThreadExecutor();
         db = AppDatabase.getDatabase(requireContext());
         ruleEngine = new RuleEngine();
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
     }
 
     @Nullable
@@ -98,28 +100,6 @@ public class ProductDetailsFragment extends BottomSheetDialogFragment {
                 behavior.setFitToContents(false);
                 behavior.setPeekHeight(getResources().getDisplayMetrics().heightPixels / 2);
                 behavior.setHideable(true);
-
-                behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-                    @Override
-                    public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                        if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                            dismiss();
-                        }
-                    }
-
-                    @Override
-                    public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                        float baseMargin = 16 * getResources().getDisplayMetrics().density;
-                        float newMargin = Math.max(0f, baseMargin * (1 - slideOffset));
-
-                        if (bottomSheet.getLayoutParams() instanceof CoordinatorLayout.LayoutParams) {
-                            CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) bottomSheet.getLayoutParams();
-                            params.leftMargin = (int) newMargin;
-                            params.rightMargin = (int) newMargin;
-                            bottomSheet.setLayoutParams(params);
-                        }
-                    }
-                });
             }
         }
     }
@@ -142,30 +122,34 @@ public class ProductDetailsFragment extends BottomSheetDialogFragment {
         healthScoreTextView = view.findViewById(R.id.health_score_text_view);
         removeFromPantryButton = view.findViewById(R.id.remove_from_pantry_button);
         nutritionFactsTable = view.findViewById(R.id.nutrition_facts_table);
-        scoresLayout = view.findViewById(R.id.scores_layout);
         analysisRecyclerView = view.findViewById(R.id.analysis_recycler_view);
         analysisRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        nutriscoreTextView.setOnClickListener(v -> showNutriscoreExplanation());
-        novaTextView.setOnClickListener(v -> showNovaExplanation());
-        ecoscoreTextView.setOnClickListener(v -> showEcoScoreExplanation());
+        nutriscoreTextView.setOnClickListener(v -> showScoreExplanation("Nutri-Score", "A nutritional rating system."));
+        novaTextView.setOnClickListener(v -> showScoreExplanation("NOVA Group", "A food processing classification."));
+        ecoscoreTextView.setOnClickListener(v -> showScoreExplanation("Eco-Score", "An environmental impact rating."));
+
+        if (currentUser == null) {
+            showErrorAndDismiss("Authentication error.");
+            return;
+        }
 
         String barcode = getArguments() != null ? getArguments().getString(ARG_BARCODE) : null;
         if (barcode != null) {
             loadProductDetails(barcode);
-
             removeFromPantryButton.setOnClickListener(v -> {
                 executorService.execute(() -> {
-                    db.productDao().deletePantryProduct(barcode);
-                    requireActivity().runOnUiThread(() -> {
-                        Toast.makeText(getContext(), "Removed from Pantry", Toast.LENGTH_SHORT).show();
-                        checkIfProductInPantry(barcode);
-                    });
+                    db.productDao().deletePantryProduct(barcode, currentUser.getUid());
+                    if(getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), "Removed from Pantry", Toast.LENGTH_SHORT).show();
+                            checkIfProductInPantry(barcode);
+                        });
+                    }
                 });
             });
         } else {
-            Toast.makeText(getContext(), "No barcode provided.", Toast.LENGTH_SHORT).show();
-            dismiss();
+            showErrorAndDismiss("No barcode provided.");
         }
     }
 
@@ -184,62 +168,35 @@ public class ProductDetailsFragment extends BottomSheetDialogFragment {
         productRepository.getProductByBarcode(barcode, new ProductRepository.RepositoryCallback<ProductRepository.ProductResult>() {
             @Override
             public void onComplete(ProductRepository.ProductResult result) {
-                if (getActivity() == null) return;
+                if (getActivity() == null || !isAdded()) return;
                 getActivity().runOnUiThread(() -> {
-                    if (getActivity() == null || !isAdded()) {
-                        return;
-                    }
                     if (result != null && result.productWithDetails != null) {
                         displayProductDetails(result.productWithDetails);
-
-                        if (result.apiSourceName != null && !result.apiSourceName.isEmpty()) {
-                            Toast.makeText(getContext(), "Data from: " + result.apiSourceName, Toast.LENGTH_LONG).show();
-                        }
-
                         executorService.execute(() -> {
-                            db.productDao().insertPantry(new Pantry(barcode));
+                            // CORRECTED: Removed the invalid character from the constructor call.
+                            db.productDao().insertPantry(new Pantry(barcode, currentUser.getUid()));
                             checkIfProductInPantry(barcode);
                         });
-
-                        switch (result.status) {
-                            case STALE:
-                                Toast.makeText(getContext(), "Showing stale data. Refresh for the latest.", Toast.LENGTH_LONG).show();
-                                break;
-                            case OFFLINE:
-                                Toast.makeText(getContext(), "Offline. Showing cached data.", Toast.LENGTH_LONG).show();
-                                break;
-                        }
                     } else {
-                        Toast.makeText(getContext(), "Product not found", Toast.LENGTH_SHORT).show();
-                        dismiss();
+                        showAddProductDialog(barcode);
                     }
                 });
             }
 
             @Override
             public void onError(Exception e) {
-                 if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> {
-                     if (getActivity() == null || !isAdded()) {
-                        return;
-                    }
-                    Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    dismiss();
-                });
+                if (getActivity() == null || !isAdded()) return;
+                getActivity().runOnUiThread(() -> showErrorAndDismiss("Error: " + e.getMessage()));
             }
         });
     }
 
     private void checkIfProductInPantry(String barcode) {
         executorService.execute(() -> {
-            Pantry pantryItem = db.productDao().findPantryItemByBarcode(barcode);
-             if (getActivity() == null) return;
-            getActivity().runOnUiThread(() -> {
-                 if (getActivity() == null || !isAdded()) {
-                        return;
-                    }
-                removeFromPantryButton.setVisibility(pantryItem != null ? View.VISIBLE : View.GONE);
-            });
+            Pantry pantryItem = db.productDao().findPantryItemByBarcode(barcode, currentUser.getUid());
+            if(getActivity() != null) {
+                getActivity().runOnUiThread(() -> removeFromPantryButton.setVisibility(pantryItem != null ? View.VISIBLE : View.GONE));
+            }
         });
     }
 
@@ -256,182 +213,135 @@ public class ProductDetailsFragment extends BottomSheetDialogFragment {
         servingSizeTextView.setText(productDetails.product.servingSize != null ? productDetails.product.servingSize : "");
 
         ProductAnalysisReport report = ruleEngine.analyze(productDetails);
-        healthScoreTextView.setText(String.format("Health Score: %d/100", report.getOverallScore()));
-        analysisRecyclerView.setAdapter(new AnalysisResultAdapter(report.getResults()));
-
+        if (report != null) {
+            healthScoreTextView.setText(String.format("Health Score: %d/100", report.getOverallScore()));
+            analysisRecyclerView.setAdapter(new AnalysisResultAdapter(report.getResults()));
+            displayHighlightedIngredients(productDetails, report);
+        } else {
+            healthScoreTextView.setText("Health Score: N/A");
+            analysisRecyclerView.setAdapter(null);
+            ingredientsTextView.setText("Could not analyze ingredients.");
+        }
+        
         setScoreTextView(nutriscoreTextView, productDetails.product.nutriscoreGrade, "Nutri-Score");
         setScoreTextView(novaTextView, productDetails.product.novaGroup, "NOVA Group");
         setScoreTextView(ecoscoreTextView, productDetails.product.ecoscoreGrade, "Eco-Score");
 
         displayNutriments(productDetails.nutriments);
-        displayHighlightedIngredients(productDetails, report);
     }
 
     private void displayHighlightedIngredients(ProductWithDetails productDetails, ProductAnalysisReport report) {
-        boolean hasBadIngredients = false;
-        for (AnalysisResult result : report.getResults()) {
-            if (result.getLevel() == AnalysisResult.WarningLevel.WARNING || result.getLevel() == AnalysisResult.WarningLevel.SEVERE) {
-                hasBadIngredients = true;
-                break;
-            }
-        }
-
-        if (productDetails.ingredients != null && !productDetails.ingredients.isEmpty()) {
-            SpannableStringBuilder spannableBuilder = new SpannableStringBuilder();
-            for (int i = 0; i < productDetails.ingredients.size(); i++) {
-                Ingredient ingredient = productDetails.ingredients.get(i);
-                if (ingredient.text != null) {
-                    spannableBuilder.append(ingredient.text);
-                    if (i < productDetails.ingredients.size() - 1) {
-                        spannableBuilder.append(", ");
-                    }
-                }
-            }
-
-            if (hasBadIngredients) {
-                List<String> badTerms = new ArrayList<>();
-                List<String> goodTerms = new ArrayList<>();
-                for (AnalysisResult result : report.getResults()) {
-                    if (result.getTriggeringIngredient() != null) {
-                        if (result.getLevel() == AnalysisResult.WarningLevel.INFO) {
-                            goodTerms.add(result.getTriggeringIngredient().toLowerCase());
-                        } else {
-                            badTerms.add(result.getTriggeringIngredient().toLowerCase());
-                        }
-                    }
-                }
-
-                for (String goodTerm : goodTerms) {
-                    int startIndex = 0;
-                    while (startIndex >= 0) {
-                        startIndex = spannableBuilder.toString().toLowerCase().indexOf(goodTerm, startIndex);
-                        if (startIndex >= 0) {
-                            spannableBuilder.setSpan(new BackgroundColorSpan(0x3300FF00), startIndex, startIndex + goodTerm.length(), 0);
-                            startIndex += goodTerm.length();
-                        }
-                    }
-                }
-
-                for (String badTerm : badTerms) {
-                    int startIndex = 0;
-                    while (startIndex >= 0) {
-                        startIndex = spannableBuilder.toString().toLowerCase().indexOf(badTerm, startIndex);
-                        if (startIndex >= 0) {
-                            spannableBuilder.setSpan(new BackgroundColorSpan(0x33FF0000), startIndex, startIndex + badTerm.length(), 0);
-                            spannableBuilder.setSpan(new StyleSpan(Typeface.BOLD), startIndex, startIndex + badTerm.length(), 0);
-                            spannableBuilder.setSpan(new RelativeSizeSpan(1.2f), startIndex, startIndex + badTerm.length(), 0);
-                            startIndex += badTerm.length();
-                        }
-                    }
-                }
-            } else {
-                // Apply prominent "good" styling to the entire string
-                spannableBuilder.setSpan(new BackgroundColorSpan(0x3300FF00), 0, spannableBuilder.length(), 0);
-                spannableBuilder.setSpan(new StyleSpan(Typeface.BOLD), 0, spannableBuilder.length(), 0);
-                spannableBuilder.setSpan(new RelativeSizeSpan(1.2f), 0, spannableBuilder.length(), 0);
-            }
-            ingredientsTextView.setText(spannableBuilder);
-        } else {
+        if (productDetails.ingredients == null || productDetails.ingredients.isEmpty()) {
             ingredientsTextView.setText("No ingredients listed.");
+            return;
         }
+        SpannableStringBuilder builder = new SpannableStringBuilder();
+        for (Ingredient ingredient : productDetails.ingredients) {
+            if (ingredient.text != null) {
+                SpannableString spannable = new SpannableString(ingredient.text);
+                for(AnalysisResult res : report.getResults()){
+                    if(res.getTriggeringIngredient() != null && ingredient.text.toLowerCase().contains(res.getTriggeringIngredient().toLowerCase())){
+                        spannable.setSpan(new BackgroundColorSpan(0x33FF0000), 0, spannable.length(), 0);
+                        spannable.setSpan(new StyleSpan(Typeface.BOLD), 0, spannable.length(), 0);
+                    }
+                }
+                builder.append(spannable).append("\n");
+            }
+        }
+        ingredientsTextView.setText(builder);
     }
 
     private void displayNutriments(Nutriments nutriments) {
+        nutritionFactsTable.removeAllViews();
         if (nutriments != null) {
             nutritionFactsTable.setVisibility(View.VISIBLE);
             addNutritionRow("Energy", nutriments.energy, "kcal");
             addNutritionRow("Fat", nutriments.fat, "g");
             addNutritionRow("Saturated Fat", nutriments.saturatedFat, "g");
-            addNutritionRow("Carbohydrate", nutriments.carbohydrate, "g");
-            addNutritionRow("Sugar", nutriments.sugar, "g");
-            addNutritionRow("Proteins", nutriments.proteins, "g");
-            addNutritionRow("Salt", nutriments.salt, "g");
+            addNutritionRow("Carbohydrates", nutriments.carbohydrates, "g");
+            addNutritionRow("Sugars", nutriments.sugars, "g");
             addNutritionRow("Fiber", nutriments.fiber, "g");
+            addNutritionRow("Proteins", nutriments.proteins, "g");
+            addNutritionRow("Sodium", nutriments.sodium, "mg");
         } else {
             nutritionFactsTable.setVisibility(View.GONE);
         }
     }
 
-    private void addNutritionRow(String name, double value, String unit) {
+    private void addNutritionRow(String name, Double value, String unit) {
+        if (value == null || value == 0.0) return;
         TableRow row = new TableRow(getContext());
         TextView nameView = new TextView(getContext());
         TextView valueView = new TextView(getContext());
-
         nameView.setText(name);
         valueView.setText(String.format("%.2f %s", value, unit));
-
+        nameView.setPadding(8, 4, 8, 4);
+        valueView.setPadding(8, 4, 8, 4);
+        valueView.setGravity(Gravity.END);
         row.addView(nameView);
         row.addView(valueView);
         nutritionFactsTable.addView(row);
     }
 
     private void setScoreTextView(TextView textView, String score, String prefix) {
-        if (getContext() == null) return;
-        Drawable backgroundDrawable = ContextCompat.getDrawable(getContext(), R.drawable.score_background);
-        if (backgroundDrawable == null) return;
-
-        Drawable newDrawable = backgroundDrawable.getConstantState().newDrawable().mutate();
-
-        int tintColor;
-        if (score != null) {
-            textView.setText(prefix + ": " + score.toUpperCase());
-            tintColor = getScoreColor(score);
-        } else {
-            textView.setText(prefix + ": N/A");
-            tintColor = ContextCompat.getColor(getContext(), R.color.score_unknown);
+        if (score == null || score.isEmpty()) {
+            textView.setVisibility(View.GONE);
+            return;
         }
-
-        DrawableCompat.setTint(newDrawable, tintColor);
-        textView.setBackground(newDrawable);
+        textView.setVisibility(View.VISIBLE);
+        textView.setText(String.format("%s: %s", prefix, score.toUpperCase()));
+        Drawable background = ContextCompat.getDrawable(requireContext(), R.drawable.score_background);
+        if(background != null) {
+            DrawableCompat.setTint(background, getScoreColor(score));
+            textView.setBackground(background);
+        }
     }
 
     private int getScoreColor(String score) {
-        if (getContext() == null) return Color.GRAY; 
-        if (score == null) return ContextCompat.getColor(getContext(), R.color.score_unknown);
-        
-        try {
-            int novaScore = (int) Math.round(Double.parseDouble(score));
-            switch (novaScore) {
-                case 1: return ContextCompat.getColor(getContext(), R.color.nova_1);
-                case 2: return ContextCompat.getColor(getContext(), R.color.nova_2);
-                case 3: return ContextCompat.getColor(getContext(), R.color.nova_3);
-                case 4: return ContextCompat.getColor(getContext(), R.color.nova_4);
-            }
-        } catch (NumberFormatException e) {
-            // Not a number, fall through to check for letter grades.
-        }
-
+        if (score == null) return ContextCompat.getColor(requireContext(), R.color.score_unknown);
         switch (score.toLowerCase()) {
-            case "a": return ContextCompat.getColor(getContext(), R.color.nutriscore_a);
-            case "b": return ContextCompat.getColor(getContext(), R.color.nutriscore_b);
-            case "c": return ContextCompat.getColor(getContext(), R.color.nutriscore_c);
-            case "d": return ContextCompat.getColor(getContext(), R.color.nutriscore_d);
-            case "e": return ContextCompat.getColor(getContext(), R.color.nutriscore_e);
-            default: return ContextCompat.getColor(getContext(), R.color.score_unknown);
+            case "a":
+            case "1":
+                return ContextCompat.getColor(requireContext(), R.color.nutriscore_a);
+            case "b":
+                return ContextCompat.getColor(requireContext(), R.color.nutriscore_b);
+            case "c":
+            case "2":
+                return ContextCompat.getColor(requireContext(), R.color.nutriscore_c);
+            case "d":
+            case "3":
+                return ContextCompat.getColor(requireContext(), R.color.nutriscore_d);
+            case "e":
+            case "4":
+                return ContextCompat.getColor(requireContext(), R.color.nutriscore_e);
+            default:
+                return ContextCompat.getColor(requireContext(), R.color.score_unknown);
         }
     }
 
-    private void showNutriscoreExplanation() {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("What is Nutri-Score?")
-                .setMessage("Nutri-Score is a nutritional rating system that converts the nutritional value of products into a simple A-E letter grade. \n\nA (Green) = Healthiest Choice\nE (Red) = Less Healthy Choice\n\nThis system helps you easily compare the nutritional quality of similar products.")
-                .setPositiveButton("OK", null)
-                .show();
+    private void showErrorAndDismiss(String message) {
+        if(getContext() == null) return;
+        Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+        dismiss();
     }
 
-    private void showNovaExplanation() {
+    private void showAddProductDialog(String barcode) {
+        if(getContext() == null) return;
         new AlertDialog.Builder(requireContext())
-                .setTitle("What is NOVA Group?")
-                .setMessage("The NOVA classification is a system that categorizes foods according to the extent and purpose of industrial processing, rather than in terms of nutrients.\n\n1 - Unprocessed or minimally processed foods\n2 - Processed culinary ingredients\n3 - Processed foods\n4 - Ultra-processed food and drink products")
-                .setPositiveButton("OK", null)
-                .show();
+            .setTitle("Product Not Found")
+            .setMessage("This product is not in our database yet. Would you like to add it?")
+            .setPositiveButton("Add Product", (dialog, which) -> {
+                Intent intent = new Intent(getActivity(), AddProductActivity.class);
+                intent.putExtra(AddProductActivity.EXTRA_BARCODE, barcode);
+                startActivity(intent);
+                dismiss();
+            })
+            .setNegativeButton("Cancel", (dialog, which) -> dismiss())
+            .setOnCancelListener(dialog -> dismiss())
+            .show();
     }
 
-    private void showEcoScoreExplanation() {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("What is Eco-Score?")
-                .setMessage("The Eco-Score is a letter grade from A to E that summarizes the environmental impact of food products. It is based on a life cycle assessment of the product, from farm to fork.")
-                .setPositiveButton("OK", null)
-                .show();
+    private void showScoreExplanation(String title, String message) {
+        new AlertDialog.Builder(requireContext()).setTitle(title).setMessage(message).setPositiveButton("OK", null).show();
     }
 }

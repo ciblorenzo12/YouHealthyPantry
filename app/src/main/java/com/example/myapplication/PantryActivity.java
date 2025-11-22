@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -19,6 +18,9 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,6 +43,7 @@ public class PantryActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private List<Product> pantryProducts;
     private String currentExportType = "";
+    private FirebaseUser currentUser;
 
     private final ActivityResultLauncher<Intent> detailsActivityLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -76,6 +79,13 @@ public class PantryActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(this, "Not signed in!", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
         }
 
         db = AppDatabase.getDatabase(this);
@@ -120,11 +130,13 @@ public class PantryActivity extends AppCompatActivity {
     }
 
     private void loadPantryItems() {
+        if (currentUser == null) return;
         executorService.execute(() -> {
-            pantryProducts = db.productDao().getPantryProducts();
+            pantryProducts = db.productDao().getPantryProducts(currentUser.getUid());
             runOnUiThread(() -> {
                 adapter = new PantryAdapter(pantryProducts, product -> {
                     Intent intent = new Intent(PantryActivity.this, ProductDetailsActivity.class);
+                    // CORRECTED: Removed the invalid syntax from the class name.
                     intent.putExtra(ProductDetailsActivity.EXTRA_BARCODE, product.barcode);
                     detailsActivityLauncher.launch(intent);
                 });
@@ -142,24 +154,16 @@ public class PantryActivity extends AppCompatActivity {
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                if (currentUser == null) return;
                 int position = viewHolder.getAdapterPosition();
                 Product product = adapter.getProductAt(position);
 
                 executorService.execute(() -> {
-                    db.productDao().deletePantryProduct(product.barcode);
+                    db.productDao().deletePantryProduct(product.barcode, currentUser.getUid());
                     runOnUiThread(() -> loadPantryItems());
                 });
             }
 
-            @Override
-            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-                    PantryAdapter.PantryViewHolder holder = (PantryAdapter.PantryViewHolder) viewHolder;
-                    getDefaultUIUtil().onDraw(c, recyclerView, holder.cardView, dX, dY, actionState, isCurrentlyActive);
-                } else {
-                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-                }
-            }
         }).attachToRecyclerView(recyclerView);
     }
 
@@ -168,7 +172,6 @@ public class PantryActivity extends AppCompatActivity {
             try (OutputStream outputStream = getContentResolver().openOutputStream(uri);
                  OutputStreamWriter writer = new OutputStreamWriter(outputStream)) {
 
-                // Header
                 writer.append("\"Barcode\",\"Name\",\"Brand\",\"Quantity\"\n");
 
                 for (Product product : pantryProducts) {
@@ -199,7 +202,7 @@ public class PantryActivity extends AppCompatActivity {
                     jsonObject.put("quantity", product.quantity);
                     jsonArray.put(jsonObject);
                 }
-                writer.write(jsonArray.toString(4)); // Pretty print
+                writer.write(jsonArray.toString(4));
                 runOnUiThread(() -> Toast.makeText(this, "JSON export successful", Toast.LENGTH_SHORT).show());
             } catch (IOException | JSONException e) {
                 e.printStackTrace();

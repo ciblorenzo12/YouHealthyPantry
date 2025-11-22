@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     
-    <color name="bottom_sheet_background">#FFFFFF</color>
-    <color name="text_primary">#000000</color>
-    <color name="text_secondary">#80000000</color>
-
     <!-- Score Colors -->
-    <color name="nutriscore_a">#2ECC71</color>
-    <color name="nutriscore_b">#9ACD32</color>
-    <color name="nutriscore_c">#FFC107</color>
-    <color name="nutriscore_d">#FF9800</color>
-    <color name="nutriscore_e">#F44336</color>
+    <color name="nutriscore_a">#FF008000</color>
+    <color name="nutriscore_b">#FF80C000</color>
+    <color name="nutriscore_c">#FFFFC000</color>
+    <color name="nutriscore_d">#FFFF8000</color>
+    <color name="nutriscore_e">#FFFF0000</color>
+    <color name="score_unknown">#FF808080</color>
 
-    <color name="nova_1">#2ECC71</color>
-    <color name="nova_2">#FFC107</color>
-    <color name="nova_3">#FF9800</color>
-    <color name="nova_4">#F44336</color>
-
-    <color name="score_unknown">#BDBDBD</color>
+    <!-- NOVA Group Colors -->
+    <color name="nova_1">#FF008000</color>
+    <color name="nova_2">#FFFFC000</color>
+    <color name="nova_3">#FFFF8000</color>
+    <color name="nova_4">#FFFF0000</color>
 </resources>

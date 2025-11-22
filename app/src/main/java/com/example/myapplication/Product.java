@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import androidx.annotation.NonNull;
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -23,6 +24,10 @@ public class Product {
     public String novaGroup;
     public String ecoscoreGrade;
 
+    // CORRECTED: Added isFavorite field with a default value.
+    @ColumnInfo(defaultValue = "0")
+    public boolean isFavorite;
+
     public Product(@NonNull String barcode, String productName, String brands, String quantity, String imageUrl, String labels, String packaging, String categories, String servingSize, String nutriscoreGrade, String novaGroup, String ecoscoreGrade) {
         this.barcode = barcode;
         this.productName = productName;
@@ -36,5 +41,6 @@ public class Product {
         this.nutriscoreGrade = nutriscoreGrade;
         this.novaGroup = novaGroup;
         this.ecoscoreGrade = ecoscoreGrade;
+        this.isFavorite = false; // Default value for new products
     }
 }

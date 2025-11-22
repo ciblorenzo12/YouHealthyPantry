@@ -35,18 +35,22 @@ public interface ProductDao {
         }
     }
 
+    // Favorite method
+    @Query("UPDATE products SET isFavorite = :isFavorite WHERE barcode = :barcode")
+    void setFavorite(String barcode, boolean isFavorite);
+
     // Pantry methods
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertPantry(Pantry pantry);
 
-    @Query("SELECT * FROM pantry WHERE barcode = :barcode")
-    Pantry findPantryItemByBarcode(String barcode);
+    @Query("SELECT * FROM pantry WHERE barcode = :barcode AND userId = :userId")
+    Pantry findPantryItemByBarcode(String barcode, String userId);
 
-    @Query("DELETE FROM pantry WHERE barcode = :barcode")
-    void deletePantryProduct(String barcode);
+    @Query("DELETE FROM pantry WHERE barcode = :barcode AND userId = :userId")
+    void deletePantryProduct(String barcode, String userId);
     
-    @Query("SELECT p.* FROM products p INNER JOIN pantry ON p.barcode = pantry.barcode")
-    List<Product> getPantryProducts();
+    @Query("SELECT p.* FROM products p INNER JOIN pantry ON p.barcode = pantry.barcode WHERE pantry.userId = :userId")
+    List<Product> getPantryProducts(String userId);
     
     // Cache metadata methods
     @Query("SELECT * FROM cache_meta WHERE barcode = :barcode")
