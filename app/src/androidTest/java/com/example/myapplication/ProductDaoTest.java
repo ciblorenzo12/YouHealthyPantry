@@ -36,9 +36,14 @@ public class ProductDaoTest {
         db.close();
     }
 
+    // CORRECTED: The constructor call now has the correct number of arguments (67 doubles) to match the Nutriments entity.
     private Nutriments createDefaultNutriments(String barcode) {
         return new Nutriments(barcode, 
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, // 15
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, // 30
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, // 45
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, // 60
+            null, null, null, null, null, null, null); // 67
     }
 
     @Test
@@ -61,7 +66,7 @@ public class ProductDaoTest {
         assertNotNull(retrievedProductDetails);
         assertEquals("Test Soda", retrievedProductDetails.product.productName);
         assertEquals(1, retrievedProductDetails.ingredients.size());
-
+        assertEquals(150.0, retrievedProductDetails.nutriments.energy, 0.0);
     }
     
     @Test
@@ -90,19 +95,16 @@ public class ProductDaoTest {
         // ARRANGE
         String barcode = "pantry-item-barcode";
         Product product = new Product(barcode, "Pantry Product", null, null, null, null, null, null, null, null, null, null);
-        // CORRECTED: Pass the test user ID to the Pantry constructor.
         Pantry pantryItem = new Pantry(barcode, TEST_USER_ID);
         
         productDao.insertProduct(product);
 
         // ACT & ASSERT (Insert)
         productDao.insertPantry(pantryItem);
-        // CORRECTED: Pass the user ID to find the item.
         Pantry retrievedItem = productDao.findPantryItemByBarcode(barcode, TEST_USER_ID);
         assertNotNull("Pantry item should exist after insertion", retrievedItem);
 
         // ACT & ASSERT (Delete)
-        // CORRECTED: Pass the user ID to delete the item.
         productDao.deletePantryProduct(barcode, TEST_USER_ID);
         Pantry retrievedItemAfterDelete = productDao.findPantryItemByBarcode(barcode, TEST_USER_ID);
         assertNull("Pantry item should be null after deletion", retrievedItemAfterDelete);
