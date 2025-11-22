@@ -1,5 +1,6 @@
 plugins {
     id("com.android.application")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -45,6 +46,15 @@ dependencies {
     implementation("androidx.exifinterface:exifinterface:1.4.1")
     implementation("androidx.room:room-runtime:2.8.4")
     annotationProcessor("androidx.room:room-compiler:2.8.4")
+
+    // Firebase & Google Sign-In Dependencies
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.firebaseui:firebase-ui-auth:8.0.2")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    // CORRECTED: Added Firebase Storage dependency
+    implementation("com.google.firebase:firebase-storage")
+
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
     implementation("com.google.code.gson:gson:2.13.2")
     implementation("com.squareup.picasso:picasso:2.71828")
@@ -59,7 +69,5 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     implementation("androidx.test.espresso:espresso-idling-resource:3.6.0")
-
-    // CORRECTED: Added the missing dependency for ActivityTestRule
     androidTestImplementation("androidx.test:rules:1.6.0")
 }

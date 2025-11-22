@@ -2,21 +2,19 @@ package com.example.myapplication;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
-import androidx.room.ForeignKey;
-import androidx.room.PrimaryKey;
 
-@Entity(tableName = "pantry",
-        foreignKeys = @ForeignKey(entity = Product.class,
-                                  parentColumns = "barcode",
-                                  childColumns = "barcode",
-                                  onDelete = ForeignKey.CASCADE))
+// CORRECTED: Define a composite primary key to make each entry unique per user.
+@Entity(tableName = "pantry", primaryKeys = {"barcode", "userId"})
 public class Pantry {
 
-    @PrimaryKey
     @NonNull
     public String barcode;
 
-    public Pantry(@NonNull String barcode) {
+    @NonNull
+    public String userId;
+
+    public Pantry(@NonNull String barcode, @NonNull String userId) {
         this.barcode = barcode;
+        this.userId = userId;
     }
 }

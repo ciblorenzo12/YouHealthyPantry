@@ -83,7 +83,6 @@ public class ProductRepository {
         });
     }
 
-    // CORRECTED: The logic now tries all APIs to find one with ingredients.
     private void fetchFromApiChain(String barcode, RepositoryCallback<ProductResult> callback, ProductWithDetails cachedProduct, boolean isCacheStale) {
         ProductResponse finalResponse = null;
         String sourceName = "";
@@ -93,13 +92,12 @@ public class ProductRepository {
             try {
                 ProductResponse currentResponse = client.getProduct(barcode);
                 if (currentResponse != null && currentResponse.status == 1 && currentResponse.product != null) {
-                    // A response is only considered successful if it has ingredients.
                     boolean hasIngredients = (currentResponse.product.ingredientsText != null && !currentResponse.product.ingredientsText.isEmpty()) ||
                                            (currentResponse.product.ingredients != null && currentResponse.product.ingredients.length > 0);
                     if (hasIngredients) {
                         finalResponse = currentResponse;
                         sourceName = client.getClass().getSimpleName();
-                        break; // Found a good result, stop searching.
+                        break; 
                     }
                 }
             } catch (IOException e) {
@@ -114,14 +112,12 @@ public class ProductRepository {
             productDao.insertCacheMeta(new CacheMeta(barcode, System.currentTimeMillis()));
             callback.onComplete(new ProductResult(fetchedProduct, DataStatus.FRESH, sourceName));
         } else {
-            // Fallback to cached data if available, otherwise show an error.
             if (cachedProduct != null) {
                 callback.onComplete(new ProductResult(cachedProduct, isCacheStale ? DataStatus.STALE : DataStatus.FRESH, "Cache (Stale)"));
             } else {
                  if (networkErrors == apiClients.size()) {
                     callback.onError(new IOException("Network error. Please check your connection and try again."));
                 } else {
-                    // This is the error you were seeing.
                     callback.onError(new Exception("Product found, but ingredient information is insufficient."));
                 }
             }
@@ -136,8 +132,14 @@ public class ProductRepository {
         Nutriments nutriments = null;
         if (productData.nutriments != null) {
             ProductResponse.NutrimentsData d = productData.nutriments;
-            nutriments = new Nutriments(barcode, 
-                d.energy, d.energyKj, d.proteins, d.carbohydrates, d.fat, d.fiber, d.sugars, d.addedSugars, d.sucrose, d.glucose, d.fructose, d.lactose, d.maltose, d.maltodextrins, d.starch, d.polyols, d.saturatedFat, d.monounsaturatedFat, d.polyunsaturatedFat, d.transFat, d.cholesterol, d.omega3Fat, d.alphaLinolenicAcid, d.eicosapentaenoicAcid, d.docosahexaenoicAcid, d.omega6Fat, d.linoleicAcid, d.arachidonicAcid, d.gammaLinolenicAcid, d.dihomoGammaLinolenicAcid, d.omega9Fat, d.oleicAcid, d.vitaminA, d.vitaminD, d.vitaminE, d.vitaminK, d.vitaminC, d.vitaminB1, d.vitaminB2, d.vitaminPP, d.vitaminB6, d.vitaminB9, d.vitaminB12, d.biotin, d.pantothenicAcid, d.silica, d.bicarbonate, d.potassium, d.chloride, d.calcium, d.phosphorus, d.iron, d.magnesium, d.zinc, d.copper, d.manganese, d.fluoride, d.selenium, d.chromium, d.molybdenum, d.iodine, d.sodium, d.alcohol, d.caffeine, d.taurine, d.carbonFootprint);
+            nutriments = new Nutriments(barcode,
+                d.energy, d.energyKj, d.fat, d.saturatedFat, d.monounsaturatedFat, d.polyunsaturatedFat, d.transFat, d.cholesterol,
+                d.carbohydrates, d.sugars, d.addedSugars, d.sucrose, d.glucose, d.fructose, d.lactose, d.maltose, d.maltodextrins, d.starch, d.polyols,
+                d.fiber, d.proteins, d.salt, d.sodium, d.alcohol, d.vitaminA, d.vitaminD, d.vitaminE, d.vitaminK, d.vitaminC, d.vitaminB1, d.vitaminB2, d.vitaminPP,
+                d.vitaminB6, d.vitaminB9, d.vitaminB12, d.biotin, d.pantothenicAcid, d.silica, d.bicarbonate, d.potassium, d.chloride, d.calcium, d.phosphorus,
+                d.iron, d.magnesium, d.zinc, d.copper, d.manganese, d.fluoride, d.selenium, d.chromium, d.molybdenum, d.iodine, d.caffeine, d.taurine,
+                d.omega3Fat, d.omega6Fat, d.omega9Fat, d.oleicAcid, d.linoleicAcid, d.gammaLinolenicAcid, d.dihomoGammaLinolenicAcid, d.arachidonicAcid,
+                d.alphaLinolenicAcid, d.eicosapentaenoicAcid, d.docosahexaenoicAcid, d.carbonFootprint);
         }
 
         List<Ingredient> ingredients = new ArrayList<>();
@@ -189,7 +191,8 @@ public class ProductRepository {
         } else if (productData.ingredients != null) {
             for (ProductResponse.IngredientsData ingredientData : productData.ingredients) {
                 if (ingredientData != null && ingredientData.text != null) {
-                    String formattedText = ingredientData.text.substring(0, 1).toUpperCase() + ingredientData.text.substring(1).toLowerCase();
+                    String cleanedText = ingredientData.text.replaceAll("\\[[a-zA-Z-]+\\]", "").trim();
+                    String formattedText = cleanedText.substring(0, 1).toUpperCase() + cleanedText.substring(1).toLowerCase();
                     boolean isSugar = sugarKeywords.stream().anyMatch(formattedText.toLowerCase()::contains);
                     if (isSugar) {
                         if (hasAddedSugars) {

@@ -1,8 +1,9 @@
 package com.example.myapplication;
 
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
-import androidx.annotation.NonNull;
+import com.google.gson.annotations.SerializedName;
 
 @Entity(tableName = "nutriments")
 public class Nutriments {
@@ -11,94 +12,220 @@ public class Nutriments {
     @NonNull
     public String barcode;
 
-    // Energy
+    @SerializedName("energy-kcal_100g")
     public Double energy;
+
+    @SerializedName("energy-kj_100g")
     public Double energyKj;
 
-    // Macros
-    public Double proteins;
-    public Double carbohydrates;
+    @SerializedName("fat_100g")
     public Double fat;
-    public Double fiber;
 
-    // Sugar Types
+    @SerializedName("saturated-fat_100g")
+    public Double saturatedFat;
+
+    @SerializedName("monounsaturated-fat_100g")
+    public Double monounsaturatedFat;
+
+    @SerializedName("polyunsaturated-fat_100g")
+    public Double polyunsaturatedFat;
+
+    @SerializedName("trans-fat_100g")
+    public Double transFat;
+
+    @SerializedName("cholesterol_100g")
+    public Double cholesterol;
+
+    @SerializedName("carbohydrates_100g")
+    public Double carbohydrates;
+
+    @SerializedName("sugars_100g")
     public Double sugars;
+
+    @SerializedName("added-sugars_100g")
     public Double addedSugars;
+
+    @SerializedName("sucrose_100g")
     public Double sucrose;
+    
+    @SerializedName("glucose_100g")
     public Double glucose;
+    
+    @SerializedName("fructose_100g")
     public Double fructose;
+    
+    @SerializedName("lactose_100g")
     public Double lactose;
+    
+    @SerializedName("maltose_100g")
     public Double maltose;
+
+    @SerializedName("maltodextrins_100g")
     public Double maltodextrins;
+
+    @SerializedName("starch_100g")
     public Double starch;
+
+    @SerializedName("polyols_100g")
     public Double polyols;
 
-    // Fats & Fatty Acids
-    public Double saturatedFat;
-    public Double monounsaturatedFat;
-    public Double polyunsaturatedFat;
-    public Double transFat;
-    public Double cholesterol;
-    public Double omega3Fat;
-    public Double alphaLinolenicAcid;
-    public Double eicosapentaenoicAcid;
-    public Double docosahexaenoicAcid;
-    public Double omega6Fat;
-    public Double linoleicAcid;
-    public Double arachidonicAcid;
-    public Double gammaLinolenicAcid;
-    public Double dihomoGammaLinolenicAcid;
-    public Double omega9Fat;
-    public Double oleicAcid;
+    @SerializedName("fiber_100g")
+    public Double fiber;
 
-    // Vitamins
+    @SerializedName("proteins_100g")
+    public Double proteins;
+
+    // CORRECTED: Added the missing salt field.
+    @SerializedName("salt_100g")
+    public Double salt;
+
+    @SerializedName("sodium_100g")
+    public Double sodium;
+
+    @SerializedName("alcohol")
+    public Double alcohol;
+
+    @SerializedName("vitamin-a_100g")
     public Double vitaminA;
+
+    @SerializedName("vitamin-d_100g")
     public Double vitaminD;
+
+    @SerializedName("vitamin-e_100g")
     public Double vitaminE;
+
+    @SerializedName("vitamin-k_100g")
     public Double vitaminK;
+
+    @SerializedName("vitamin-c_100g")
     public Double vitaminC;
+
+    @SerializedName("vitamin-b1_100g")
     public Double vitaminB1;
+
+    @SerializedName("vitamin-b2_100g")
     public Double vitaminB2;
+
+    @SerializedName("vitamin-pp_100g")
     public Double vitaminPP;
+
+    @SerializedName("vitamin-b6_100g")
     public Double vitaminB6;
+
+    @SerializedName("vitamin-b9_100g")
     public Double vitaminB9;
+
+    @SerializedName("vitamin-b12_100g")
     public Double vitaminB12;
+
+    @SerializedName("biotin_100g")
     public Double biotin;
+
+    @SerializedName("pantothenic-acid_100g")
     public Double pantothenicAcid;
 
-    // Minerals & Trace Elements
+    @SerializedName("silica_100g")
     public Double silica;
+
+    @SerializedName("bicarbonate_100g")
     public Double bicarbonate;
+
+    @SerializedName("potassium_100g")
     public Double potassium;
+
+    @SerializedName("chloride_100g")
     public Double chloride;
+
+    @SerializedName("calcium_100g")
     public Double calcium;
+
+    @SerializedName("phosphorus_100g")
     public Double phosphorus;
+
+    @SerializedName("iron_100g")
     public Double iron;
+
+    @SerializedName("magnesium_100g")
     public Double magnesium;
+
+    @SerializedName("zinc_100g")
     public Double zinc;
+
+    @SerializedName("copper_100g")
     public Double copper;
+
+    @SerializedName("manganese_100g")
     public Double manganese;
+
+    @SerializedName("fluoride_100g")
     public Double fluoride;
+
+    @SerializedName("selenium_100g")
     public Double selenium;
+
+    @SerializedName("chromium_100g")
     public Double chromium;
+
+    @SerializedName("molybdenum_100g")
     public Double molybdenum;
+
+    @SerializedName("iodine_100g")
     public Double iodine;
 
-    // Other
-    public Double sodium;
-    public Double alcohol;
+    @SerializedName("caffeine_100g")
     public Double caffeine;
+
+    @SerializedName("taurine_100g")
     public Double taurine;
+
+    @SerializedName("omega-3-fat_100g")
+    public Double omega3Fat;
+
+    @SerializedName("omega-6-fat_100g")
+    public Double omega6Fat;
+
+    @SerializedName("omega-9-fat_100g")
+    public Double omega9Fat;
+
+    @SerializedName("oleic-acid_100g")
+    public Double oleicAcid;
+
+    @SerializedName("linoleic-acid_100g")
+    public Double linoleicAcid;
+
+    @SerializedName("gamma-linolenic-acid_100g")
+    public Double gammaLinolenicAcid;
+
+    @SerializedName("dihomo-gamma-linolenic-acid_100g")
+    public Double dihomoGammaLinolenicAcid;
+
+    @SerializedName("arachidonic-acid_100g")
+    public Double arachidonicAcid;
+
+    @SerializedName("alpha-linolenic-acid_100g")
+    public Double alphaLinolenicAcid;
+
+    @SerializedName("eicosapentaenoic-acid_100g")
+    public Double eicosapentaenoicAcid;
+
+    @SerializedName("docosahexaenoic-acid_100g")
+    public Double docosahexaenoicAcid;
+
+    @SerializedName("carbon-footprint_100g")
     public Double carbonFootprint;
 
-    public Nutriments(@NonNull String barcode, Double energy, Double energyKj, Double proteins, Double carbohydrates, Double fat, Double fiber, Double sugars, Double addedSugars, Double sucrose, Double glucose, Double fructose, Double lactose, Double maltose, Double maltodextrins, Double starch, Double polyols, Double saturatedFat, Double monounsaturatedFat, Double polyunsaturatedFat, Double transFat, Double cholesterol, Double omega3Fat, Double alphaLinolenicAcid, Double eicosapentaenoicAcid, Double docosahexaenoicAcid, Double omega6Fat, Double linoleicAcid, Double arachidonicAcid, Double gammaLinolenicAcid, Double dihomoGammaLinolenicAcid, Double omega9Fat, Double oleicAcid, Double vitaminA, Double vitaminD, Double vitaminE, Double vitaminK, Double vitaminC, Double vitaminB1, Double vitaminB2, Double vitaminPP, Double vitaminB6, Double vitaminB9, Double vitaminB12, Double biotin, Double pantothenicAcid, Double silica, Double bicarbonate, Double potassium, Double chloride, Double calcium, Double phosphorus, Double iron, Double magnesium, Double zinc, Double copper, Double manganese, Double fluoride, Double selenium, Double chromium, Double molybdenum, Double iodine, Double sodium, Double alcohol, Double caffeine, Double taurine, Double carbonFootprint) {
+    // Constructor - CORRECTED to include salt
+    public Nutriments(@NonNull String barcode, Double energy, Double energyKj, Double fat, Double saturatedFat, Double monounsaturatedFat, Double polyunsaturatedFat, Double transFat, Double cholesterol, Double carbohydrates, Double sugars, Double addedSugars, Double sucrose, Double glucose, Double fructose, Double lactose, Double maltose, Double maltodextrins, Double starch, Double polyols, Double fiber, Double proteins, Double salt, Double sodium, Double alcohol, Double vitaminA, Double vitaminD, Double vitaminE, Double vitaminK, Double vitaminC, Double vitaminB1, Double vitaminB2, Double vitaminPP, Double vitaminB6, Double vitaminB9, Double vitaminB12, Double biotin, Double pantothenicAcid, Double silica, Double bicarbonate, Double potassium, Double chloride, Double calcium, Double phosphorus, Double iron, Double magnesium, Double zinc, Double copper, Double manganese, Double fluoride, Double selenium, Double chromium, Double molybdenum, Double iodine, Double caffeine, Double taurine, Double omega3Fat, Double omega6Fat, Double omega9Fat, Double oleicAcid, Double linoleicAcid, Double gammaLinolenicAcid, Double dihomoGammaLinolenicAcid, Double arachidonicAcid, Double alphaLinolenicAcid, Double eicosapentaenoicAcid, Double docosahexaenoicAcid, Double carbonFootprint) {
         this.barcode = barcode;
         this.energy = energy;
         this.energyKj = energyKj;
-        this.proteins = proteins;
-        this.carbohydrates = carbohydrates;
         this.fat = fat;
-        this.fiber = fiber;
+        this.saturatedFat = saturatedFat;
+        this.monounsaturatedFat = monounsaturatedFat;
+        this.polyunsaturatedFat = polyunsaturatedFat;
+        this.transFat = transFat;
+        this.cholesterol = cholesterol;
+        this.carbohydrates = carbohydrates;
         this.sugars = sugars;
         this.addedSugars = addedSugars;
         this.sucrose = sucrose;
@@ -109,22 +236,11 @@ public class Nutriments {
         this.maltodextrins = maltodextrins;
         this.starch = starch;
         this.polyols = polyols;
-        this.saturatedFat = saturatedFat;
-        this.monounsaturatedFat = monounsaturatedFat;
-        this.polyunsaturatedFat = polyunsaturatedFat;
-        this.transFat = transFat;
-        this.cholesterol = cholesterol;
-        this.omega3Fat = omega3Fat;
-        this.alphaLinolenicAcid = alphaLinolenicAcid;
-        this.eicosapentaenoicAcid = eicosapentaenoicAcid;
-        this.docosahexaenoicAcid = docosahexaenoicAcid;
-        this.omega6Fat = omega6Fat;
-        this.linoleicAcid = linoleicAcid;
-        this.arachidonicAcid = arachidonicAcid;
-        this.gammaLinolenicAcid = gammaLinolenicAcid;
-        this.dihomoGammaLinolenicAcid = dihomoGammaLinolenicAcid;
-        this.omega9Fat = omega9Fat;
-        this.oleicAcid = oleicAcid;
+        this.fiber = fiber;
+        this.proteins = proteins;
+        this.salt = salt;
+        this.sodium = sodium;
+        this.alcohol = alcohol;
         this.vitaminA = vitaminA;
         this.vitaminD = vitaminD;
         this.vitaminE = vitaminE;
@@ -154,10 +270,19 @@ public class Nutriments {
         this.chromium = chromium;
         this.molybdenum = molybdenum;
         this.iodine = iodine;
-        this.sodium = sodium;
-        this.alcohol = alcohol;
         this.caffeine = caffeine;
         this.taurine = taurine;
+        this.omega3Fat = omega3Fat;
+        this.omega6Fat = omega6Fat;
+        this.omega9Fat = omega9Fat;
+        this.oleicAcid = oleicAcid;
+        this.linoleicAcid = linoleicAcid;
+        this.gammaLinolenicAcid = gammaLinolenicAcid;
+        this.dihomoGammaLinolenicAcid = dihomoGammaLinolenicAcid;
+        this.arachidonicAcid = arachidonicAcid;
+        this.alphaLinolenicAcid = alphaLinolenicAcid;
+        this.eicosapentaenoicAcid = eicosapentaenoicAcid;
+        this.docosahexaenoicAcid = docosahexaenoicAcid;
         this.carbonFootprint = carbonFootprint;
     }
 }

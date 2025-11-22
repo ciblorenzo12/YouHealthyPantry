@@ -20,6 +20,7 @@ public class ProductDaoTest {
 
     private AppDatabase db;
     private ProductDao productDao;
+    private static final String TEST_USER_ID = "test-user-123";
 
     @Before
     public void createDb() {
@@ -86,22 +87,24 @@ public class ProductDaoTest {
 
     @Test
     public void insertAndDeletePantryItem_worksCorrectly() {
-        // ARRANGE: A product must exist in the 'products' table before it can be added to the 'pantry'.
+        // ARRANGE
         String barcode = "pantry-item-barcode";
         Product product = new Product(barcode, "Pantry Product", null, null, null, null, null, null, null, null, null, null);
-        Pantry pantryItem = new Pantry(barcode);
+        // CORRECTED: Pass the test user ID to the Pantry constructor.
+        Pantry pantryItem = new Pantry(barcode, TEST_USER_ID);
         
-        // ACT (Setup): Insert the prerequisite product.
         productDao.insertProduct(product);
 
         // ACT & ASSERT (Insert)
         productDao.insertPantry(pantryItem);
-        Pantry retrievedItem = productDao.findPantryItemByBarcode(barcode);
+        // CORRECTED: Pass the user ID to find the item.
+        Pantry retrievedItem = productDao.findPantryItemByBarcode(barcode, TEST_USER_ID);
         assertNotNull("Pantry item should exist after insertion", retrievedItem);
 
         // ACT & ASSERT (Delete)
-        productDao.deletePantryProduct(barcode);
-        Pantry retrievedItemAfterDelete = productDao.findPantryItemByBarcode(barcode);
+        // CORRECTED: Pass the user ID to delete the item.
+        productDao.deletePantryProduct(barcode, TEST_USER_ID);
+        Pantry retrievedItemAfterDelete = productDao.findPantryItemByBarcode(barcode, TEST_USER_ID);
         assertNull("Pantry item should be null after deletion", retrievedItemAfterDelete);
     }
 }
