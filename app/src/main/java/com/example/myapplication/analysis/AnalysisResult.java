@@ -1,4 +1,4 @@
-package com.example.myapplication.analysis.rules;
+package com.example.myapplication.analysis;
 
 import androidx.annotation.Nullable;
 

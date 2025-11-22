@@ -10,15 +10,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
-import com.example.myapplication.analysis.rules.AnalysisResult;
 
 import java.util.List;
 
 public class AnalysisResultAdapter extends RecyclerView.Adapter<AnalysisResultAdapter.ViewHolder> {
 
-    private final List<com.example.myapplication.analysis.rules.AnalysisResult> results;
+    private final List<AnalysisResult> results;
 
-    public AnalysisResultAdapter(List<com.example.myapplication.analysis.rules.AnalysisResult> results) {
+    public AnalysisResultAdapter(List<AnalysisResult> results) {
         this.results = results;
     }
 
