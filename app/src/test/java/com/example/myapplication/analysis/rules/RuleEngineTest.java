@@ -28,7 +28,7 @@ public class RuleEngineTest {
         private final String barcode;
         private List<Ingredient> ingredients = Collections.emptyList();
         private String novaGroup;
-        private final Double[] nutrientValues = new Double[66];
+        private final Double[] nutrientValues = new Double[67];
 
         public ProductBuilder(String barcode) {
             this.barcode = barcode;
@@ -45,10 +45,10 @@ public class RuleEngineTest {
             return this;
         }
 
-        public ProductBuilder withAddedSugars(double value) { nutrientValues[7] = value; return this; }
-        public ProductBuilder withSugars(double value) { nutrientValues[6] = value; return this; }
-        public ProductBuilder withSaturatedFat(double value) { nutrientValues[16] = value; return this; }
-        public ProductBuilder withSodium(double value) { nutrientValues[61] = value; return this; }
+        public ProductBuilder withAddedSugars(double value) { nutrientValues[10] = value; return this; }
+        public ProductBuilder withSugars(double value) { nutrientValues[9] = value; return this; }
+        public ProductBuilder withSaturatedFat(double value) { nutrientValues[3] = value; return this; }
+        public ProductBuilder withSodium(double value) { nutrientValues[22] = value; return this; }
 
         public ProductWithDetails build() {
             ProductWithDetails product = new ProductWithDetails();
@@ -71,7 +71,7 @@ public class RuleEngineTest {
                 nutrientValues[52], nutrientValues[53], nutrientValues[54], nutrientValues[55], 
                 nutrientValues[56], nutrientValues[57], nutrientValues[58], nutrientValues[59], 
                 nutrientValues[60], nutrientValues[61], nutrientValues[62], nutrientValues[63], 
-                nutrientValues[64], nutrientValues[65]
+                nutrientValues[64], nutrientValues[65], nutrientValues[66]
             );
             return product;
         }
